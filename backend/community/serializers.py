@@ -47,7 +47,8 @@ class LikeSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     
     def create(self, validated_data):
-        user = self.context['request'].user
+        # Allow user to be passed via save(user=...) or fall back to request.user
+        user = validated_data.get('user') or self.context['request'].user
         obj_type = validated_data['type']
         obj_id = validated_data['id']
         

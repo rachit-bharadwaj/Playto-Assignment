@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PostCardProps {
   post: Post;
@@ -16,9 +17,10 @@ interface PostCardProps {
 
 export function PostCard({ post, showCommentsLink = true }: PostCardProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const likeMutation = useMutation({
-    mutationFn: likePost,
+    mutationFn: (id: number) => likePost(id, user?.username),
     onMutate: async () => {
       // Optimistic update
       await queryClient.cancelQueries({ queryKey: ["posts"] });

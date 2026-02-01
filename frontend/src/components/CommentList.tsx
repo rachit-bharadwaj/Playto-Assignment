@@ -7,6 +7,7 @@ import { Heart } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CommentNodeProps {
   comment: Comment;
@@ -14,10 +15,11 @@ interface CommentNodeProps {
 
 export function CommentNode({ comment }: CommentNodeProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isExpanded, setIsExpanded] = useState(true);
 
   const likeMutation = useMutation({
-    mutationFn: likeComment,
+    mutationFn: (id: number) => likeComment(id, user?.username),
     onSuccess: () => {
          queryClient.invalidateQueries({ queryKey: ["post"] }); 
          queryClient.invalidateQueries({ queryKey: ["leaderboard"] });

@@ -21,6 +21,26 @@ class PostViewSet(viewsets.ModelViewSet):
             return PostDetailSerializer
         return PostSerializer
 
+    def perform_create(self, serializer):
+        # Mock Auth: Check for username in body
+        username = self.request.data.get('username')
+        if username:
+            user = User.objects.filter(username=username).first()
+            if user:
+                serializer.save(author=user)
+                return
+
+        # Fallback to authenticates user
+        if self.request.user.is_authenticated:
+            serializer.save(author=self.request.user)
+        else:
+             # Fallback for demo: use first user if available
+            first_user = User.objects.first()
+            if first_user:
+                serializer.save(author=first_user)
+            else:
+                raise IntegrityError("No user available for post creation")
+
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         
@@ -50,8 +70,24 @@ class LikeViewSet(viewsets.ViewSet):
     def create(self, request):
         serializer = LikeSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            data = serializer.save()
+            # Mock Auth Logic
+            user = request.user
+            username = request.data.get('username')
+            if username:
+                found_user = User.objects.filter(username=username).first()
+                if found_user:
+                    user = found_user
+            
+            # If still anonymous (and not valid), serializer.save() might fail if we don't pass user
+            # But we modified serializer to look in validated_data
+            
+            # If user is anonymous and no username provided, we might want to default or fail.
+            if not user.is_authenticated:
+                 # Try default user for demo robustness
+                 user = User.objects.first()
+                 
             try:
+                data = serializer.save(user=user)
                 Like.objects.create(
                     user=data['user'],
                     content_type=data['content_type'],
@@ -60,6 +96,8 @@ class LikeViewSet(viewsets.ViewSet):
                 return Response({'status': 'liked'}, status=status.HTTP_201_CREATED)
             except IntegrityError:
                 return Response({'status': 'already liked'}, status=status.HTTP_200_OK)
+            except Exception as e:
+                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LeaderboardView(generics.ListAPIView):

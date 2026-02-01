@@ -33,12 +33,16 @@ export const getPost = async (id: string) => {
   return data;
 };
 
-export const likePost = async (id: number) => {
-  const { data } = await client.post("/likes/", { type: "post", id });
+export const likePost = async (id: number, username?: string) => {
+  const { data } = await client.post("/likes/", { type: "post", id, username });
   return data;
 };
 
-export const likeComment = async (id: number) => {
-  const { data } = await client.post("/likes/", { type: "comment", id });
+export const likeComment = async (id: number, username?: string) => {
+  const { data } = await client.post("/likes/", {
+    type: "comment",
+    id,
+    username,
+  });
   return data;
 };

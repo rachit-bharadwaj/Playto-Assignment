@@ -66,6 +66,30 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+
+    def perform_create(self, serializer):
+        # Mock Auth: Check for username in body
+        username = self.request.data.get('username')
+        if username:
+            user = User.objects.filter(username=username).first()
+            if user:
+                serializer.save(author=user)
+                return
+
+        # Fallback to authenticated user
+        if self.request.user.is_authenticated:
+            serializer.save(author=self.request.user)
+        else:
+             # Fallback for demo: use first user if available
+            first_user = User.objects.first()
+            if first_user:
+                serializer.save(author=first_user)
+            else:
+                raise IntegrityError("No user available for comment creation")
+
 class LikeViewSet(viewsets.ViewSet):
     def create(self, request):
         serializer = LikeSerializer(data=request.data, context={'request': request})
@@ -107,11 +131,9 @@ class LeaderboardView(generics.ListAPIView):
         cutoff = timezone.now() - timedelta(hours=24)
         
         # Karma from Posts (5 points per like)
-        
         # Karma from Posts (5 points per like) using Subquery to avoid cross-product joins
         # Simplified Subquery:
         # We want to select Sum(likes) from Like joined with Post where Post.author = OuterRef.
-
         
         posts_karma_sq = Subquery(
             Post.objects.filter(author=OuterRef('pk'))

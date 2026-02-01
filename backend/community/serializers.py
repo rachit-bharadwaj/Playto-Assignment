@@ -14,7 +14,11 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['id', 'author', 'content', 'created_at', 'likes_count', 'replies']
+        fields = ['id', 'author', 'post', 'parent', 'content', 'created_at', 'likes_count', 'replies']
+        extra_kwargs = {
+            'post': {'write_only': True},
+            'parent': {'write_only': True},
+        }
 
     def get_replies(self, obj):
         # We expect the view to have populated `_replies` list on the object to avoid N+1

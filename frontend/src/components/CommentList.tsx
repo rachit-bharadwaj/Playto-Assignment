@@ -8,15 +8,18 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { CreateCommentForm } from "./CreateCommentForm";
 
 interface CommentNodeProps {
   comment: Comment;
+  postId: number;
 }
 
-export function CommentNode({ comment }: CommentNodeProps) {
+export function CommentNode({ comment, postId }: CommentNodeProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [isExpanded, setIsExpanded] = useState(true);
+  const [showReply, setShowReply] = useState(false);
 
   const likeMutation = useMutation({
     mutationFn: (id: number) => likeComment(id, user?.username),
@@ -64,6 +67,15 @@ export function CommentNode({ comment }: CommentNodeProps) {
             {comment.likes_count > 0 && (
                  <span className="text-xs font-medium text-muted-foreground tabular-nums">{comment.likes_count}</span>
             )}
+
+            <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 text-xs text-muted-foreground hover:text-primary"
+                onClick={() => setShowReply(!showReply)}
+            >
+                Reply
+            </Button>
             
             {comment.replies && comment.replies.length > 0 && (
                  <Button 
@@ -76,6 +88,25 @@ export function CommentNode({ comment }: CommentNodeProps) {
                  </Button>
             )}
         </div>
+
+        <AnimatePresence>
+            {showReply && (
+                 <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="mt-2"
+                 >
+                    <CreateCommentForm 
+                        postId={postId} 
+                        parentId={comment.id} 
+                        onSuccess={() => setShowReply(false)} 
+                        autoFocus
+                        placeholder={`Replying to ${comment.author.username}...`}
+                    />
+                 </motion.div>
+            )}
+        </AnimatePresence>
         
         <AnimatePresence>
             {isExpanded && comment.replies && comment.replies.length > 0 && (
@@ -88,7 +119,7 @@ export function CommentNode({ comment }: CommentNodeProps) {
                     {/* Actually better structure for reddit style lines: Use nested div with padding */}
                     <div className="space-y-4">
                         {comment.replies.map((reply) => (
-                            <CommentNode key={reply.id} comment={reply} />
+                            <CommentNode key={reply.id} comment={reply} postId={postId} />
                         ))}
                     </div>
                 </motion.div>
@@ -101,13 +132,14 @@ export function CommentNode({ comment }: CommentNodeProps) {
 
 interface CommentListProps {
     comments?: Comment[];
+    postId: number;
 }
 
-export function CommentList({ comments }: CommentListProps) {
+export function CommentList({ comments, postId }: CommentListProps) {
     if (!comments || comments.length === 0) return null;
     return (
         <div className="space-y-6">
-            {comments.map(c => <CommentNode key={c.id} comment={c} />)}
+            {comments.map(c => <CommentNode key={c.id} comment={c} postId={postId} />)}
         </div>
     )
 }

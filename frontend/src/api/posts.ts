@@ -46,3 +46,18 @@ export const likeComment = async (id: number, username?: string) => {
   });
   return data;
 };
+
+export const createComment = async (
+  content: string,
+  post: number,
+  parent?: number,
+  username?: string,
+) => {
+  const { data } = await client.post("/comments/", {
+    content,
+    post,
+    parent,
+    username,
+  });
+  return data;
+};

@@ -4,6 +4,7 @@ import { getPost } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import { CommentList } from "@/components/CommentList";
 import { LeaderboardWidget } from "@/components/LeaderboardWidget";
+import { CreateCommentForm } from "@/components/CreateCommentForm";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -38,8 +39,10 @@ export function PostDetail() {
                     {post.comments?.length || 0} (Showing roots)
                 </span>
             </h3>
+
+            <CreateCommentForm postId={post.id} className="mb-8" />
             
-            <CommentList comments={post.comments} />
+            <CommentList comments={post.comments} postId={post.id} />
         </div>
       </div>
 
